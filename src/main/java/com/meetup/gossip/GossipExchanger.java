@@ -2,10 +2,12 @@ package com.meetup.gossip;
 
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 class GossipExchanger {
 
     public static final String NEVER = "never";
+    public static final int MAX_MINUTES = 480;
     private final List<Driver> drivers;
     private Integer turns;
 
@@ -17,12 +19,11 @@ class GossipExchanger {
     }
 
     public String turnsToExchangeAllGossips() {
-        if(hasEveryoneExchangedAllGossips()) return turns.toString();
-        while (turns < 480) {
-            nextTurn();
-            if(hasEveryoneExchangedAllGossips()) return turns.toString();
+        String turnsStr = turns.toString();
+        while (turns < MAX_MINUTES && !hasEveryoneExchangedAllGossips()) {
+            turnsStr = nextTurn();
         }
-        return NEVER;
+        return turnsStr;
     }
 
     public Driver getDriverById(Integer id) {
@@ -31,10 +32,11 @@ class GossipExchanger {
                 .findFirst().orElseThrow(RuntimeException::new);
     }
 
-    public void nextTurn() {
+    public String nextTurn() {
         drivers.forEach(Driver::moveNext);
         drivers.forEach(driver -> drivers.forEach(driver::exchange));
         turns++;
+        return turns >= MAX_MINUTES? NEVER: turns.toString();
     }
 
     public boolean hasEveryoneExchangedAllGossips() {

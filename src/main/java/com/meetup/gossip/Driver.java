@@ -7,38 +7,38 @@ import java.util.Queue;
 import static java.util.Arrays.asList;
 
 class Driver {
-    private final Queue<Integer> stopRoute;
+    private final Route route;
     private final Integer identifier;
-    private LinkedHashSet<Integer> receivedGossipsFrom;
+    private final Gossips gossips;
 
     private Driver(Integer identifier, Integer... stopRoute) {
         this.identifier = identifier;
-        this.stopRoute = new LinkedList<>(asList(stopRoute));
-        this.receivedGossipsFrom = new LinkedHashSet<>();
-        this.receivedGossipsFrom.add(identifier);
+        this.gossips = new Gossips(new LinkedHashSet<>(asList(identifier)));
+        this.route = new Route(asList(stopRoute));
     }
 
     public Driver(IdentifierService identifierService, Integer... stopRoute) {
         this(identifierService.next(), stopRoute);
     }
 
+    public Integer currentStop() {
+        return route.currentStop();
+    }
+
     public boolean areAtTheSameStop(Driver driver) {
-        assert this.stopRoute.peek() != null;
-        return this.stopRoute.peek().equals(driver.stopRoute.peek());
+        return route.isAtStop(driver.currentStop());
     }
 
     public boolean isAtStop(Integer stop) {
-        assert stopRoute.peek() != null;
-        return stopRoute.peek().equals(stop);
+        return route.isAtStop(stop);
     }
 
     public void moveNext() {
-        Integer poll = stopRoute.poll();
-        stopRoute.offer(poll);
+        route.moveToNextStop();
     }
 
     public Integer gossips() {
-        return receivedGossipsFrom.size();
+        return gossips.size();
     }
 
     public boolean exchange(Driver driver) {
@@ -51,8 +51,8 @@ class Driver {
     }
 
     private void receiveGossip(Driver driver) {
-        this.receivedGossipsFrom.add(driver.identifier);
-        this.receivedGossipsFrom.addAll(driver.receivedGossipsFrom);
+        this.gossips.add(driver.identifier);
+        this.gossips.addAll(driver.gossips);
     }
 
     public Integer identifier() {
